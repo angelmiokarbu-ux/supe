@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Supe</string>
+    <string name="app_slogan">Asisten Pengingat &amp; Catatan Pintar</string>
+    
+    <!-- Quick Settings Tile -->
+    <string name="tile_voice_name">Supe Suara</string>
+    
+    <!-- Widget -->
+    <string name="widget_name">Supe Cepat</string>
+    <string name="widget_quick_mic">Bicara</string>
+    <string name="widget_quick_note">Catat</string>
+    <string name="widget_title">Supe Pengingat</string>
+    <string name="widget_no_pending">Tidak ada tagihan tertunda</string>
+    
+    <!-- Notification Service -->
+    <string name="notif_service_label">Pemantau Notifikasi Tagihan Supe</string>
+    <string name="notif_channel_reminders">Pengingat Jadwal &amp; Tugas</string>
+    <string name="notif_channel_reminders_desc">Notifikasi saat waktu pengingat Anda jatuh tempo</string>
+    <string name="notif_channel_bills">Deteksi Tagihan Otomatis</string>
+    <string name="notif_channel_bills_desc">Notifikasi pengingat otomatis saat terdeteksi tagihan baru</string>
+</resources>
