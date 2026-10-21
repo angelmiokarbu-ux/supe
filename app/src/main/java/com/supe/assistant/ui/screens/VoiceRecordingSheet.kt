@@ -1,11 +1,16 @@
 package com.supe.assistant.ui.screens
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +37,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -67,9 +73,28 @@ fun VoiceRecordingSheet(
     val context = LocalContext.current
     var isListening by remember { mutableStateOf(false) }
     var recognizedText by remember { mutableStateOf("") }
-    var speechStatus by remember { mutableStateOf("Ketuk mikrofon dan mulai berbicara...") }
+    val isRecognitionSupported = remember { SpeechRecognizer.isRecognitionAvailable(context) }
+    var speechStatus by remember {
+        mutableStateOf(
+            if (isRecognitionSupported) "Ketuk mikrofon dan mulai berbicara..."
+            else "Pengenal suara sistem tidak aktif. Anda dapat mengetik langsung atau cek setelan suara."
+        )
+    }
 
     var recognizer by remember { mutableStateOf<SpeechRecognizer?>(null) }
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        isListening = false
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                recognizedText = spokenText
+                speechStatus = "Suara berhasil dikenali."
+            }
+        }
+    }
 
     DisposableEffect(Unit) {
         if (SpeechRecognizer.isRecognitionAvailable(context)) {
@@ -111,12 +136,26 @@ fun VoiceRecordingSheet(
                 override fun onEvent(eventType: Int, params: Bundle?) {}
             })
             recognizer = sr
-        } else {
-            speechStatus = "Pengenal suara sistem tidak tersedia di perangkat ini."
         }
 
         onDispose {
             recognizer?.destroy()
+        }
+    }
+
+    fun launchSystemSpeechDialog() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale("id", "ID"))
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Bicara sekarang...")
+        }
+        try {
+            isListening = true
+            speechLauncher.launch(intent)
+            speechStatus = "Membuka dialog suara..."
+        } catch (e: Exception) {
+            isListening = false
+            speechStatus = "Layanan pengenal suara belum terpasang. Silakan ketik langsung di kolom teks."
         }
     }
 
@@ -128,9 +167,15 @@ fun VoiceRecordingSheet(
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "id-ID")
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             }
-            recognizer?.startListening(intent)
-            isListening = true
-            speechStatus = "Mendengarkan..."
+            try {
+                recognizer?.startListening(intent)
+                isListening = true
+                speechStatus = "Mendengarkan..."
+            } catch (e: Exception) {
+                launchSystemSpeechDialog()
+            }
+        } else {
+            launchSystemSpeechDialog()
         }
     }
 
@@ -188,6 +233,31 @@ fun VoiceRecordingSheet(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
+
+                if (!isRecognitionSupported) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = {
+                            try {
+                                context.startActivity(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS))
+                            } catch (e: Exception) {
+                                try {
+                                    context.startActivity(
+                                        Intent(
+                                            Intent.ACTION_VIEW,
+                                            Uri.parse("market://details?id=com.google.android.tts")
+                                        )
+                                    )
+                                } catch (e2: Exception) {
+                                    // ignore
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Buka Pengaturan Suara", fontSize = 12.sp)
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
