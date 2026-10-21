@@ -52,4 +52,4 @@ Aplikasi Android modern berbasis **Jetpack Compose (Material 3)** dengan arsitek
 - **Quick Settings**: Android `TileService`
 - **Widget**: Android `AppWidgetProvider`
 - **CI/CD**: GitHub Actions Automated Build & Signed APK Release
-- **Target OS**: Android 8.0 (API 26) hingga Android 14/15 (API 34/35)
+- **Target OS**: Android 8.0 (API 26) hingga Android 15/16 (API 35/36)
